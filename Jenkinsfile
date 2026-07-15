@@ -75,21 +75,17 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-
             steps {
+                sh '''
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
 
-                withKubeConfig(credentialsId: 'kubeconfig') {
+                    kubectl set image deployment/cicdapp \
+                    cicdapp=${IMAGE}
 
-                    sh """
-                    kubectl set image deployment/cicdapp cicdapp=${IMAGE}
                     kubectl rollout status deployment/cicdapp
-                    """
-
-                }
-
-            }
-
-        }
+        '''
+    }
+}
 
     }
 
