@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: cicdapp
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: cicdapp
+
+  template:
+    metadata:
+      labels:
+        app: cicdapp
+
+    spec:
+      containers:
+      - name: cicdapp
+        image: 775412354718.dkr.ecr.ap-south-1.amazonaws.com/cicdapp:latest
+
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 3000
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
