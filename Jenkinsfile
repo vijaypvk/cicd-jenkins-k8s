@@ -8,8 +8,8 @@ pipeline {
         ECR_REGISTRY = "775412354718.dkr.ecr.ap-south-1.amazonaws.com"
         ECR_REPOSITORY = "cicdapp"
 
-        IMAGE_TAG = "${BUILD_NUMBER}"
-        IMAGE = "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+        //IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE = "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
 
     }
 
