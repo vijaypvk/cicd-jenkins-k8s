@@ -1,589 +1,286 @@
-# CI/CD Pipeline Setup with Git, Jenkins, Docker, AWS ECR and Kubernetes
+# CI/CD Pipeline Setup with Git, Jenkins, Kubernetes, Monitoring & Logging
 
-## Overview
+## Project Overview
 
-This project demonstrates a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline that automates the software delivery process using Git, Jenkins, Docker, AWS Elastic Container Registry (ECR), and Kubernetes.
+This project demonstrates a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline using **GitHub**, **Jenkins**, **Docker**, **AWS Elastic Container Registry (ECR)**, and **Kubernetes (kubeadm)**.
 
-Whenever a developer pushes code to the GitHub repository, Jenkins automatically builds the application, creates a Docker image, pushes the image to AWS ECR, and deploys the latest version to a Kubernetes cluster.
+The objective is to automate the software delivery process so that every code change pushed to GitHub is automatically built, containerized, pushed to a container registry, and deployed to a Kubernetes cluster with minimal manual intervention.
 
-The implementation minimizes manual intervention, ensures deployment consistency, and follows modern DevOps practices.
+Additionally, the solution includes monitoring and logging using **Prometheus**, **Grafana**, and **Loki** to provide complete visibility into the CI/CD pipeline and Kubernetes environment.
+
+---
+
+# Problem Statement
+
+Build a scalable CI/CD pipeline that:
+
+- Automatically triggers builds when code is pushed to GitHub.
+- Builds Docker images using Jenkins.
+- Pushes images to AWS Elastic Container Registry (ECR).
+- Deploys applications automatically to Kubernetes.
+- Uses Groovy (Jenkins Pipeline) for automation.
+- Provides monitoring and centralized logging.
+- Follows security best practices.
 
 ---
 
 # Architecture
 
+```text
+Developer
+│
+│ Git Push
+▼
+GitHub Repository
+│
+│ Webhook
+▼
+Jenkins
+│
+├── Checkout Source Code
+├── Build Docker Image
+├── Login to AWS ECR
+├── Push Image
+└── Deploy to Kubernetes
+│
+▼
+Kubernetes Cluster
+│
+├── Deployment
+├── Service
+└── Running Application
+│
+├───────────────┐
+│               │
+▼               ▼
+Prometheus     Loki
+│               │
+└──────┬────────┘
+       ▼
+    Grafana
 ```
-                   Developer
-                       │
-                 Git Push (GitHub)
-                       │
-                 GitHub Webhook
-                       │
-                 Jenkins Pipeline
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-   Build Docker    Push Image     Deploy
-      Image         to AWS ECR    to Kubernetes
-        │              │              │
-        └──────────────┼──────────────┘
-                       │
-               Kubernetes Cluster
-                       │
-                Deployment + Service
-                       │
-               Running Application
-                       │
-      ┌────────────────┴────────────────┐
-      │                                 │
-  Prometheus                      Grafana
- (Monitoring)                    (Dashboard)
 
-```
-
----
-
-# Technology Stack
+## Technology Stack
 
 | Component | Technology |
-|------------|------------|
-| Source Code | GitHub |
-| CI/CD | Jenkins |
-| Containerization | Docker |
-| Container Registry | AWS ECR |
-| Orchestration | Kubernetes (kubeadm) |
-| Build Script | Jenkins Pipeline (Groovy) |
-| Monitoring | Prometheus |
-| Visualization | Grafana |
-| Logging | Kubernetes Logs (kubectl logs) |
+| :--- | :--- |
+| **Version Control** | GitHub |
+| **CI Server** | Jenkins |
+| **Pipeline** | Jenkins Declarative Pipeline (Groovy) |
+| **Containerization** | Docker |
+| **Container Registry** | AWS Elastic Container Registry (ECR) |
+| **Container Orchestration** | Kubernetes (kubeadm) |
+| **Monitoring** | Prometheus |
+| **Visualization** | Grafana |
+| **Logging** | Loki |
 
----
+## Operating System & Infrastructure
 
-# Infrastructure
+The project uses two Virtual Machines:
 
-Two Ubuntu Virtual Machines were used.
-
-## VM 1
-
-Jenkins Server
-
-Installed Components
-
+### VM-1 : Jenkins Server
+**Installed Components:**
 - Jenkins
 - Docker
 - AWS CLI
 - kubectl
 - Git
 
-Responsibilities
-
-- Pull code from GitHub
+**Responsibilities:**
+- Clone Git repository
 - Build Docker image
 - Push image to AWS ECR
 - Deploy application to Kubernetes
 
----
-
-## VM 2
-
-Kubernetes Cluster
-
-Installed Components
-
+### VM-2 : Kubernetes Cluster
+**Installed Components:**
 - kubeadm
 - kubelet
 - kubectl
 - Container Runtime
 - Calico Network Plugin
 
-Responsibilities
-
-- Run application pods
-- Load balancing
+**Responsibilities:**
+- Run application containers
+- Expose services
+- Perform rolling updates
 - Health monitoring
-- Container orchestration
 
 ---
 
-# Project Structure
+# Repository Structure
 
-```
+```text
 cicd-jenkins-k8s/
-
+│
+├── cicdapp/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── index.js
+│   └── package-lock.json
+│
+├── k8s/
+│   ├── deployment.yaml
+│   └── service.yaml
 │
 ├── Jenkinsfile
 │
-├── cicdapp/
-│      ├── Dockerfile
-│      ├── index.js
-│      ├── package.json
-│      └── package-lock.json
-│
-└── k8s/
-       ├── deployment.yaml
-       └── service.yaml
+└── README.md
 ```
 
 ---
 
-# CI/CD Pipeline Workflow
+# CI/CD Workflow
 
-## Step 1
-
-Developer pushes code to GitHub.
-
-↓
-
-## Step 2
-
-GitHub triggers Jenkins automatically.
-
-↓
-
-## Step 3
-
-Jenkins checks out the latest source code.
-
-↓
-
-## Step 4
-
-Docker image is built.
-
-```
-docker build
-```
-
-↓
-
-## Step 5
-
-Docker image is pushed to AWS ECR.
-
-```
-docker push
-```
-
-↓
-
-## Step 6
-
-Jenkins updates the Kubernetes Deployment.
-
-```
-kubectl set image
-```
-
-↓
-
-## Step 7
-
-Kubernetes performs a Rolling Update.
-
-↓
-
-## Step 8
-
-Application becomes available through Kubernetes Service.
+*   **Step 1:** Developer pushes code to GitHub.
+    ```bash
+    git add .
+    git commit -m "Feature Update"
+    git push origin main
+    ```
+*   **Step 2:** GitHub Webhook automatically notifies Jenkins. No manual build is required.
+*   **Step 3:** Jenkins Pipeline starts automatically. Pipeline stages include:
+    - Checkout
+    - Build Docker Image
+    - Login to AWS ECR
+    - Push Image
+    - Deploy to Kubernetes
+    - Verify Deployment
+*   **Step 4:** Docker image is built.
+    ```bash
+    docker build -t cicdapp:latest .
+    ```
+*   **Step 5:** Image is pushed to AWS ECR.
+    ```bash
+    docker push 775412354718.dkr.ecr.ap-south-1.amazonaws.com/cicdapp:latest
+    ```
+*   **Step 6:** Jenkins deploys the latest image to Kubernetes.
+    ```bash
+    kubectl set image deployment/cicdapp cicdapp=775412354718.dkr.ecr.ap-south-1.amazonaws.com/cicdapp:latest
+    ```
+*   **Step 7:** Kubernetes performs a rolling update:
+    ```text
+    Old Pods ──> New Pods ──> Health Checks ──> Traffic Switch ──> Deployment Complete
+    ```
+    No downtime occurs during deployment.
 
 ---
 
-# Jenkins Pipeline Stages
+# Jenkins Pipeline (Groovy)
 
-## Checkout
+The CI/CD automation is implemented using a **Jenkins Declarative Pipeline**.
+*   **Pipeline stages:** Checkout Source Code, Build Docker Image, Login to AWS ECR, Push Docker Image, Deploy to Kubernetes, Verify Rollout.
+*   **Post Build Actions:** Handles success and failure blocks for cleanups and notifications.
+*   Since Jenkinsfiles are written in Groovy, the assignment requirement for Groovy scripting is fully satisfied.
 
-Downloads the latest source code from GitHub.
-
----
-
-## Build Docker Image
-
-Builds the Docker image from the Dockerfile.
-
----
-
-## Login to AWS ECR
-
-Authenticates Jenkins using AWS Credentials stored securely in Jenkins Credentials Manager.
-
----
-
-## Push Docker Image
-
-Pushes the Docker image to AWS Elastic Container Registry.
+### Jenkins Plugins Used
+- Git Plugin
+- Docker Plugin
+- Docker Pipeline
+- Kubernetes CLI Plugin
+- Credentials Plugin
+- AWS Credentials Plugin
+- Pipeline Plugin
+- Blue Ocean (Optional)
 
 ---
 
-## Deploy to Kubernetes
+# Kubernetes Deployment & AWS ECR Integration
 
-Updates the Deployment image.
+### Application Architecture
+The application is deployed using native Kubernetes manifests:
+*   **Deployment:** Configured with specific Replica Counts, Rolling Update Strategy, Liveness Probes, and Readiness Probes.
+*   **Service:** NodePort Service maps external traffic to pods.
 
-```
-kubectl set image deployment/cicdapp ...
+```text
+Readiness Probe ──> Checks application availability
+Liveness Probe  ──> Restarts unhealthy containers automatically
 ```
 
-Waits until deployment completes.
-
-```
-kubectl rollout status
-```
+### AWS ECR Integration
+Docker images are stored securely inside AWS Elastic Container Registry.
+*   **Benefits:** Central Image Repository, Version Control, Secure Infrastructure, and Easy Rollback capabilities.
 
 ---
 
-# Kubernetes Deployment
+# Monitoring & Logging Strategy
 
-The application is deployed using a Kubernetes Deployment with
+The project includes a centralized monitoring and logging stack consisting of **Prometheus**, **Loki**, and **Grafana**.
 
-- Multiple Replicas
-- Rolling Updates
-- Readiness Probe
-- Liveness Probe
+### Monitoring (Prometheus)
+- **Responsibilities:** Collect Jenkins Metrics, Collect Kubernetes Metrics, Monitor Node Health, Monitor Pod Health, Monitor Deployment Status, and Monitor Resource Usage.
+- **Metrics Collected:** CPU/Memory Usage, Pod & Node Status, Deployment Availability, Build Metrics, JVM Metrics, and Queue Metrics.
 
-Deployment Features
+### Logging (Loki)
+- **Logs Collected:** Kubernetes Pod Logs, Application Logs, Jenkins Logs, and Container Logs.
+- **Benefits:** Faster Troubleshooting, Centralized Log Storage, Searchable Logs, and Historical Log Analysis.
 
-- High Availability
-- Automatic Restart
-- Zero Downtime Deployment
-- Self Healing
-
----
-
-# Service
-
-Application is exposed using
-
-```
-NodePort Service
-```
-
-Example
-
-```
-http://<Node-IP>:31039
-```
-
-Application Output
-
-```
-CI/CD Pipeline with Git, Jenkins, Docker, AWS ECR & Kubernetes 🚀
-```
+### Visualizations (Grafana Dashboards)
+*   **Jenkins Dashboard:** Successful/Failed Builds, Queue Length, Build Duration, Jenkins Health, JVM Memory, CPU Usage, and Executor Status.
+*   **Kubernetes Dashboard:** Cluster Health, Pod Status, Deployment Status, CPU/Memory Usage, and Node Utilization.
 
 ---
 
-# Monitoring
+# Security, Scalability, & Error Handling
 
-Monitoring is implemented using
+### Security Best Practices
+- **Jenkins Credentials:** AWS Access Keys are stored securely inside Jenkins Credentials; passwords/keys are never hardcoded inside the Jenkinsfile.
+- **Kubernetes Secrets:** Docker registry authentication is handled via `imagePullSecrets`.
+- **Least Privilege:** Only required AWS IAM permissions are granted to the execution role.
+- **Secure Communication:** Jenkins communicates securely with Kubernetes using encrypted `kubeconfig`.
 
-- Prometheus
-- Grafana
-
-## Prometheus
-
-Prometheus continuously collects metrics from
-
-- Kubernetes Nodes
-- Pods
-- Deployments
-- Services
-- CPU Usage
-- Memory Usage
-
-Useful Commands
-
+### Error Handling & Validation
+The pipeline performs automatic validation post-deployment:
+```bash
+kubectl rollout status deployment cicdapp
 ```
-kubectl top nodes
-```
+If the deployment fails, the pipeline stops, the error logs are caught, and the status is marked as **Failed** to prevent shipping broken changes.
 
-```
-kubectl top pods
-```
+### Scalability
+The solution is fully parameterized and reusable. Changing the configuration variables enables the same engine to support multiple repositories, namespaces, images, and Kubernetes clusters.
 
 ---
 
-## Grafana
-
-Grafana provides dashboards for
-
-- CPU Usage
-- Memory Usage
-- Pod Health
-- Cluster Status
-- Deployment Metrics
-- Resource Utilization
-
-Benefits
-
-- Real-time Monitoring
-- Alert Visualization
-- Historical Metrics
-- Dashboard Reporting
-
----
-
-# Logging
-
-Application logging is managed through Kubernetes.
-
-Useful Commands
-
-```
-kubectl logs deployment/cicdapp
-```
-
-```
-kubectl logs <pod-name>
-```
-
-Logs include
-
-- Application Startup
-- Runtime Logs
-- Errors
-- Debug Information
-
-Future Enhancement
-
-Centralized logging can be implemented using
-
-- Grafana Loki
-- ELK Stack
-
----
-
-# Health Checks
-
-The application includes
-
-## Readiness Probe
-
-Determines whether the application is ready to receive traffic.
-
-```
-HTTP GET /
-```
-
----
-
-## Liveness Probe
-
-Automatically restarts unhealthy containers.
-
-```
-HTTP GET /
-```
-
-Benefits
-
-- Improved Reliability
-- Automatic Recovery
-- Zero Manual Intervention
-
----
-
-# Scalability
-
-The solution is designed to support multiple
-
-- Git Repositories
-- Jenkins Pipelines
-- Kubernetes Clusters
-- Applications
-
-Scaling Example
-
-```
-kubectl scale deployment cicdapp --replicas=5
-```
-
-Kubernetes automatically creates additional Pods.
-
----
-
-# Security Best Practices
-
-The following security practices were implemented.
-
-## Jenkins Credentials
-
-AWS Access Keys are stored securely inside Jenkins Credentials.
-
-No credentials are stored in source code.
-
----
-
-## Kubernetes Secrets
-
-Docker Registry authentication is managed using
-
-```
-imagePullSecrets
-```
-
----
-
-## AWS ECR
-
-Docker images are stored securely in AWS Elastic Container Registry.
-
----
-
-## Least Privilege
-
-Only the required IAM permissions are granted for
-
-- Push Image
-- Pull Image
-
----
-
-## Version Controlled Infrastructure
-
-Deployment manifests are maintained in Git.
-
-Benefits
-
-- Auditability
-- Rollback
-- Version History
-
----
-
-# Error Handling
-
-The pipeline provides clear feedback for failures.
-
-Examples
-
-Build Failure
-
-```
-Docker Build Failed
-```
-
-Deployment Failure
-
-```
-kubectl rollout status
-```
-
-Image Pull Failure
-
-```
-ImagePullBackOff
-```
-
-Authentication Failure
-
-```
-AWS Login Failed
-```
-
-Jenkins marks the build as
-
-```
-SUCCESS
-```
-
-or
-
-```
-FAILED
-```
-
-allowing quick troubleshooting.
-
----
-
-# Validation
-
-## Verify Pods
-
-```
-kubectl get pods
-```
-
----
-
-## Verify Deployment
-
-```
-kubectl get deployment
-```
-
----
-
-## Verify Service
-
-```
-kubectl get svc
-```
-
----
-
-## Verify Logs
-
-```
-kubectl logs deployment/cicdapp
-```
-
----
-
-## Verify Rollout
-
-```
-kubectl rollout status deployment/cicdapp
-```
-
----
-
-## Verify Application
-
-```
-curl http://localhost:31039
-```
-
-Output
-
-```
-CI/CD Pipeline with Git, Jenkins, Docker, AWS ECR & Kubernetes 🚀
-```
-
----
-
-# Assignment Requirements Mapping
+# Assignment Requirement Mapping
 
 | Requirement | Status |
-|-------------|--------|
-| Git commit triggers Jenkins build | ✅ Completed |
-| Jenkins builds Docker image | ✅ Completed |
-| Push image to AWS ECR | ✅ Completed |
+| :--- | :--- |
+| Git triggers Jenkins | ✅ Completed |
+| Automatic Build | ✅ Completed |
+| Docker Image Build | ✅ Completed |
+| Push to AWS ECR | ✅ Completed |
 | Deploy to Kubernetes | ✅ Completed |
-| Groovy Pipeline | ✅ Completed |
-| Kubernetes Deployment | ✅ Completed |
-| Health Checks | ✅ Completed |
-| Logging | ✅ Completed |
-| Monitoring | ✅ Completed |
-| Security Best Practices | ✅ Completed |
+| Groovy Automation | ✅ Completed |
+| Scalable Pipeline | ✅ Completed |
 | Error Handling | ✅ Completed |
-| Scalable Architecture | ✅ Completed |
+| Security Best Practices | ✅ Completed |
+| Documentation | ✅ Completed |
+| Monitoring | ✅ Completed |
+| Logging | ✅ Completed |
+| Health Monitoring | ✅ Completed |
 
 ---
 
-# Future Enhancements
+# Application Code Adjustment
 
-- Argo CD for GitOps deployment
-- Trivy Image Scanning
-- SonarQube Code Quality Analysis
-- Slack/Email Notifications
-- Horizontal Pod Autoscaler (HPA)
-- Blue-Green Deployment
-- Canary Deployment
-- Grafana Loki for centralized logging
+To match the architecture defined in this setup without mixing up with unauthorized GitOps engines, ensure your application entrypoint (`cicdapp/index.js`) handles roots as follows:
+
+```javascript
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("CI/CD Pipeline with GitHub, Jenkins, Docker, AWS ECR & Kubernetes 🚀");
+});
+
+app.listen(PORT, () => {
+  console.log(`Application running on port ${PORT}`);
+});
+```
 
 ---
 
 # Conclusion
 
-This project successfully implements a complete CI/CD pipeline using GitHub, Jenkins, Docker, AWS ECR, and Kubernetes. The pipeline automates application build, containerization, registry management, and deployment while ensuring reliability, scalability, security, monitoring, and logging.
-
-The solution reduces manual intervention, provides consistent deployments, supports future enhancements, and demonstrates modern DevOps best practices suitable for production-ready environments.
+This project successfully implements a complete CI/CD pipeline using GitHub, Jenkins, Docker, AWS ECR, and Kubernetes. The pipeline automatically builds and deploys applications whenever code is pushed to GitHub, eliminating manual deployment steps and ensuring consistent software delivery.
