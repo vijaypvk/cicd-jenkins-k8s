@@ -20,7 +20,7 @@ Build a scalable CI/CD pipeline that:
 - Deploys applications automatically to Kubernetes.
 - Uses Groovy (Jenkins Pipeline) for automation.
 - Provides monitoring and centralized logging.
-- Follows security best practices.
+
 
 ---
 
