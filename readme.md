@@ -70,6 +70,13 @@ Build a scalable CI/CD pipeline that:
 | Visualization    | Grafana                       |
 | Logging          | Loki                          |
 
+---
+## 🎥 Demo Video
+
+👉 [Watch the Demo Video](https://drive.google.com/file/d/1JcBhSlEo3QXChS1C0rD48viMPIo_W_YX/view?usp=sharing)
+---
+
+
 
 ## Operating System & Infrastructure
 
